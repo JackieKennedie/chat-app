@@ -1,8 +1,6 @@
-import { socket } from "../socket.js";
-
 import { useEffect, useState, useRef } from "react";
 
-const MessageBox = ({username, roomJoined, setRoomJoined}) => {
+const MessageBox = ({socket, username, roomJoined, setRoomJoined}) => {
     const [messageSend, setMessageSend] = useState("");
     const [messageList, setMessageList] = useState([]);
     const [inputFieldChat, setInputFieldChat] = useState("");
@@ -14,13 +12,23 @@ const MessageBox = ({username, roomJoined, setRoomJoined}) => {
         setInputFieldChat(e.target.value.substring(0, 500));
     };
     
+    const sendMessage = () => {
+        if(messageSend === "") {
+            console.log("wahh");
+        } else {
+            socket.emit("message-user-to-server", { username: username, text: messageSend, id: socket.id, roomId: roomJoined });
+            setMessageList(old => [...old, {username: username, text: messageSend}]);
+            setMessageSend("");
+        }
+    };
+
     const initialized = useRef(false);
     useEffect(() => {
         if (!initialized.current) {
             initialized.current = true;
             socket.on("message-server-to-user", (data) => {
-                setMessageList(old => [...old, data.message]);
-                setMessageSend("");
+                console.log(data);
+                setMessageList(old => [...old, data]);
             });
             socket.on("room-joined", (data) => {
                 setMessageList([]);
@@ -31,26 +39,18 @@ const MessageBox = ({username, roomJoined, setRoomJoined}) => {
             });
         }
     }, [socket]);
-    
+
     useEffect(() => {
         chatbox.current.scrollTo(0, chatbox.current.scrollHeight);
     }, [messageList]);
 
-    const sendMessage = () => {
-        if(messageSend === "") {
-            console.log("wahh");
-        } else {
-            socket.emit("message-user-to-server", { "message": messageSend, "id": socket.id, "roomId": roomJoined });
-            setMessageList(old => [...old, {username: username, text: messageSend}]);
-            setMessageSend("");
-        }
-    };
     return (
         <div className="col-span-4 flex flex-col h-[95vh] w-[95%] m-5">
             <ul 
             className="border-2 border-black p-2 m-1 bg-white w-full h-full center overflow-y-auto"
             ref={chatbox}>
             {messageList ? messageList.map((msg, i) => {
+                console.log(msg);
                 return <li 
                 key={i} 
                 className="p-2 m-1 border-2 border-black break-words line-clamp-[6] leading-10 bg-blue-100">

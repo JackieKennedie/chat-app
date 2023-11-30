@@ -122,7 +122,7 @@ app.post("/login", (req, res) => {
 io.on("connection", (socket) => {
     socket.on("message-user-to-server", (data) => {
         socket.broadcast.to(data.roomId).emit("message-server-to-user", data);
-        console.log(data.message);
+        console.log(data.text);
     });
 
     socket.on("room-change-user-to-server", (data) => {
